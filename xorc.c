@@ -1,3 +1,4 @@
+//Francisiek (C) 2020
 #define VERSION 1.0f
 #define AUTHOR "Francisiek"
 
