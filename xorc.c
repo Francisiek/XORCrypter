@@ -1,11 +1,13 @@
 //Francisiek (C) 2020
-#define VERSION 1.0f
+#define VERSION 1.1f
 #define AUTHOR "Francisiek"
+#define LOG printf("log\n");
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+typedef enum {FALSE=0, TRUE=1} bool;
 
 void help(void)
 {
@@ -60,71 +62,171 @@ char* dcrypt(const int* text, int N, const char* key)
 
 int main(int argc, char* argv[])
 {
-	int keyr=1;		//if key was in arguments, do not require on input
-	if(argc == 3)
-		keyr=0;
+	bool mode_c, mode_d, mode_k, ver, keynr, file;
+	FILE *msgf, *keyf;
+	
+	mode_c = mode_d = mode_k = ver = keynr = file = FALSE;
+	msgf = keyf = NULL;
 
-	if(!strcmp(argv[1], "-d"))	//decode msg
+	if(argc > 1)
 	{
-		system("clear");
-		//input msg and key
-		int N=0;
-		scanf("%d", &N);
+		int i = 0;
+		while(argv[1][i] !='-')
+			i++;
 		
-		int val[N];
-		for(int i=0; i<N; ++i)
+		while(argv[1][i])
 		{
-			scanf("%d", val+i);		//ascii values
+			switch(argv[1][i])
+			{
+				case 'c': mode_c = TRUE; break;
+				case 'd': mode_d = TRUE; break;
+				case 'v': ver = TRUE; break;
+				case 'k': mode_k = TRUE; break;
+			}
+			++i;
+		}
+
+		if(argc > 2 && (mode_d || mode_c))
+		{
+			if((msgf = fopen(argv[2], "r")) == NULL)
+			{
+				printf("%s: can't open file - %s\n", argv[0], argv[2]);
+				return -1;
+			}
+			else
+				file = TRUE;
+
+			if(argc > 3)
+			{
+				keynr = TRUE;
+				keyf = fopen(argv[3], "r");
+			}	//if keyf is NULL then key is argv[3]
+		}
+	}
+	else
+		help();
+
+
+	if(mode_c)
+	{
+		char msg[BUFSIZ];
+		char key[BUFSIZ];
+		int* out;
+
+		if(file)
+		{
+			char c;
+			int it=0;
+			while((c = getc(msgf)) != EOF && (it != BUFSIZ))
+				msg[it++] = c;	
+			msg[it]='\0';
+
+		}
+		else
+			scanf("%s", msg);
+
+		if(keynr)
+		{
+			if(keyf != NULL)
+			{
+				char c;
+				int it=0;
+				while((c = getc(keyf)) != EOF && (it != BUFSIZ))
+					key[it++] = c;
+				key[it]='\0';
+			}
+			else
+				strcpy(key, argv[3]);
+		}
+		else
+			scanf("%s", key);
+		
+
+		out = crypt(msg, key);
+
+		int N = strlen(msg);
+		
+		if(file)
+		{
+			msgf = fopen(argv[2], "w");
+			fprintf(msgf, "%d\n", N);
+			while(*out)
+				fprintf(msgf, "%d\n", *out++);
+		}
+		else
+		{
+			printf("%d\n", N);
+			while(*out)
+				printf("%d\n", *out++);
+		}
+	}
+	else if(mode_d)
+	{
+		int N;
+		int msg[BUFSIZ];
+		char key[BUFSIZ];
+		char *out;
+
+		if(file)
+		{
+			char tmp[5];
+			int x;
+			int it=0;
+
+			N = atoi(fgets(tmp, BUFSIZ, msgf));
+			
+			while(((fgets(tmp, BUFSIZ, msgf)) != NULL) && (it != BUFSIZ) && (it < N))
+			{
+				x = atoi(tmp);
+				msg[it++] = x;
+			}
+			
+		}
+		else
+		{
+			scanf("%d", &N);
+			int i = N;
+			while(i--)
+				scanf("%d", msg + i);
 		}
 		
-		char key[50];
-		if(keyr)
-			scanf(" %s", key);	//if key wasn't in arg
-		system("clear");	//clear screen of key
-
-		//do crypto
-		char* p;	//output msg pointer
-		if(keyr)
-			p=dcrypt(val, N, key);	//if key was in input
-		else 
-			p=dcrypt(val, N, argv[2]);	//or arguments
-
-		printf("%s\n", p);			//show output
-		
-		system("sleep 5");
-		system("clear");	//wait and clear screen
-
-	}
-	else if(!strcmp(argv[1], "-c"))	//code msg
-	{
-		system("clear");
-		char msg[50];
-		char key[50];
-        int* p;	//int table pointer
-
-		scanf("%s", msg);	//take msg
-		if(keyr)
-			scanf(" %s", key);	//if key wasn't in arguments
-		system("clear");
-        
-        int N=strlen(msg);
-
-		//do crypto
-		if(keyr)
-			p=crypt(msg, key);		//key req
+		if(keynr)
+		{
+			if(keyf != NULL)
+			{
+				char c;
+				int it=0;
+				while((c = getc(keyf)) != EOF && (it != BUFSIZ))
+					key[it++] = c;
+				key[it]='\0';
+			}
+			else
+				strcpy(key, argv[3]);
+		}
 		else
-			p=crypt(msg, argv[2]);	//key in argument
-
-		//output result
-		printf("%d\n", N);	//number of characters
-		while(*p != 0)
-			printf("%d\n", *p++);	//ascii values
+			scanf("%s", key);
+		
+		out = dcrypt(msg, N, key);
+		
+		if(file)
+		{
+			msgf = fopen(argv[2], "w");
+			while(*out)
+				putc(*out++, msgf);
+		}
+		else
+			printf("%s", out);
 
 	}
-	else if(!strcmp(argv[1], "-h") || !strcmp(argv[1], "-u"))	//output help
-		help();
-	else if(!strcmp(argv[1], "-v"))		//output usage
+	else if(ver)
 		version();
+	else
+		help();
 	
+	if(file)
+		fclose(msgf);
+	if(keyf != NULL)
+		fclose(keyf);
+
 	return 0;
 }

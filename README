@@ -1,6 +1,8 @@
 Thank you for downloading my software!
 XOR cryper for passwords and not only!
 To use it use command 'make' to build.
+ 
+Syntax : ./xorc [options] [message file] [key or key file]
 
 Program works with two arguments '-c' and '-d'.
 -c means coding. Program waits for string to crypt. Program outputs N - number of characters, 
@@ -8,19 +10,14 @@ and N decimal ascii values of each character.
 -d means decoding. Program waits for number of characters in message (N).
 Then program waits for N decimanl ascii values.
 
-In every mode you can type key to crypt/decrypt on the end of input, or either as a argument after -c or -d.
-
-Im recomennding to use it by storing ascii values in file.
-Example:
-./xorc -c mykey > crypted_file.txt
-./xorc -d mykey < crypted_file.txt
-
 Please report any bugs at francisiek.yt@gmail.com.
 Have fun! :)
 
 Take in mind that force of crypter depends on yyour key, and every messege crypted by this program can be break (but this takes a LOT of time). 
 I'm not taking any responsibility.
 
+Francisiek (C) 2020.
+XORCrypter v 1.1
+
 License CC BY-SA
 https://creativecommons.org/licenses/by-sa/4.0/
-Francisiek (C) 2020
