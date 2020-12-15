@@ -22,30 +22,33 @@ void help(void)
 
 void version(void)
 {
-	printf("Version: %.2f\n", VERSION);
-	printf("Author: %s\n", AUTHOR);
+	printf("XORCypter v. %.2f\n", VERSION);
+	printf("Copyright (C) 2020 Francisiek\n");
+	printf("Authors: %s\n", AUTHOR);
+	printf("License: License CC BY-SA 'https://creativecommons.org/licenses/by-sa/4.0/'\n");
+	
 }
 
 int* crypt(const char* text, const char* key)
 {
-	int M=strlen(key);
-	int N=strlen(text);
+	int M = strlen(key);
+	int N = strlen(text);
 	int* out = malloc( (N+1) * sizeof(int) );
 	
 	for(int i=0; i<N; ++i)
 	{
-		out[i]=text[i];
+		out[i] = text[i];
 		for(int j=0; j<M; ++j)
-			out[i]=out[i] ^ key[ i*2+5 % M ];
+			out[i] = out[i] ^ key[ i*2+5 % M ];
 	}
-	out[N]='\0';
+	out[N] = '\0';
 
 	return out;
 }
 
 char* dcrypt(const int* text, int N, const char* key)
 {
-	int M=strlen(key);
+	int M = strlen(key);
 	char* out = malloc( (N+1) * sizeof(char) );
 	
 	for(int i=0; i<N; ++i)
@@ -111,7 +114,7 @@ int main(int argc, char* argv[])
 	{
 		char msg[BUFSIZ];
 		char key[BUFSIZ];
-		int* out;
+		int *out, *tmp;
 
 		if(file)
 		{
@@ -119,8 +122,11 @@ int main(int argc, char* argv[])
 			int it=0;
 			while((c = getc(msgf)) != EOF && (it != BUFSIZ))
 				msg[it++] = c;	
-			msg[it]='\0';
+			
+			msg[it] = '\0';
 
+			fclose(msgf);
+			
 		}
 		else
 			scanf("%s", msg);
@@ -133,7 +139,10 @@ int main(int argc, char* argv[])
 				int it=0;
 				while((c = getc(keyf)) != EOF && (it != BUFSIZ))
 					key[it++] = c;
-				key[it]='\0';
+				
+				key[it] = '\0';
+
+				fclose(keyf);
 			}
 			else
 				strcpy(key, argv[3]);
@@ -143,29 +152,40 @@ int main(int argc, char* argv[])
 		
 
 		out = crypt(msg, key);
+		tmp = out;
 
 		int N = strlen(msg);
 		
 		if(file)
 		{
-			msgf = fopen(argv[2], "w");
+			if(mode_k)
+				msgf = fopen(argv[2], "a");
+			else
+				msgf = fopen(argv[2], "w");
+			
 			fprintf(msgf, "%d\n", N);
+			
 			while(*out)
 				fprintf(msgf, "%d\n", *out++);
+
+			fclose(msgf);
 		}
 		else
 		{
 			printf("%d\n", N);
+			
 			while(*out)
 				printf("%d\n", *out++);
 		}
+
+		free(tmp);
 	}
 	else if(mode_d)
 	{
 		int N;
 		int msg[BUFSIZ];
 		char key[BUFSIZ];
-		char *out;
+		char *out, *tmp;
 
 		if(file)
 		{
@@ -181,11 +201,14 @@ int main(int argc, char* argv[])
 				msg[it++] = x;
 			}
 			
+			fclose(msgf);
+			
 		}
 		else
 		{
 			scanf("%d", &N);
 			int i = N;
+			
 			while(i--)
 				scanf("%d", msg + i);
 		}
@@ -196,9 +219,13 @@ int main(int argc, char* argv[])
 			{
 				char c;
 				int it=0;
+				
 				while((c = getc(keyf)) != EOF && (it != BUFSIZ))
 					key[it++] = c;
-				key[it]='\0';
+				
+				key[it] = '\0';
+
+				fclose(keyf);
 			}
 			else
 				strcpy(key, argv[3]);
@@ -207,26 +234,30 @@ int main(int argc, char* argv[])
 			scanf("%s", key);
 		
 		out = dcrypt(msg, N, key);
-		
+		tmp = out;
+
 		if(file)
 		{
-			msgf = fopen(argv[2], "w");
+			
+			if(mode_k)
+				msgf = fopen(argv[2], "a");
+			else
+				msgf = fopen(argv[2], "w");
+			
 			while(*out)
 				putc(*out++, msgf);
+
+			fclose(msgf);
 		}
 		else
 			printf("%s", out);
 
+		free(tmp);
 	}
 	else if(ver)
 		version();
 	else
 		help();
 	
-	if(file)
-		fclose(msgf);
-	if(keyf != NULL)
-		fclose(keyf);
-
 	return 0;
 }
