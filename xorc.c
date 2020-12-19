@@ -7,8 +7,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+//enume for older standards
 typedef enum {FALSE=0, TRUE=1} bool;
 
+//-h -u argument
 void help(void)
 {
 	printf("\n\tUsage: xorc [arg] [msg file] [key file]\n\n");
@@ -18,9 +20,10 @@ void help(void)
 	printf("\t-v show program info\n\n");
 }
 
+//-v argument
 void version(void)
 {
-	printf("\nXORCypter v. %.2f simple xor cryptying files program\n", VERSION);
+	printf("\nXORCypter v. %.2f simple xor crypting files program\n", VERSION);
 	printf("Contact: 'francisiek.yt@gmail.com'\n");
 	printf("Github: 'https://github.com/Francisiek'\n\n");
 	printf("Copyright (C) 2020 Francisiek\n");
@@ -29,6 +32,7 @@ void version(void)
 	
 }
 
+//crypting func
 char* crypt(const char* text, const char* key)
 {
 	int N = strlen(text);
@@ -60,6 +64,7 @@ char* crypt(const char* text, const char* key)
 	return out;
 }
 
+//decrypting func
 char* dcrypt(const char* text, int N, const char* key)
 {
 	int M = strlen(key);
@@ -95,6 +100,7 @@ int main(int argc, char* argv[])
 	bool mode_c, mode_d;
 	FILE *msgf, *keyf;
 	
+	//default values
 	mode_c = mode_d = FALSE;
 	msgf = keyf = NULL;
 
@@ -105,6 +111,7 @@ int main(int argc, char* argv[])
 		
 		while(argv[1][i])
 		{
+			//setting modes
 			switch(argv[1][i])
 			{
 				case 'c': mode_c = TRUE; break;
@@ -116,19 +123,21 @@ int main(int argc, char* argv[])
 			++i;
 		}
 		
+		//erros less than 3 arguments
 		if(argc != 4)
 		{
 			printf("%s: bad syntax\n", argv[0]);
 			return -2;
 		}
 	}
-	else
+	else		//by default output help and version info
 	{
 		version();
 		help();
 		return 0;
 	}
-
+	
+	//crytping
 	if(mode_c)
 	{
 		char msg[BUFSIZ];
@@ -175,7 +184,8 @@ int main(int argc, char* argv[])
 
 			fclose(keyf);
 		}
-		//cryptying
+		
+		//calling crypt fun
 		out = crypt(msg, key);
 		tmp = out;
 		
@@ -197,8 +207,8 @@ int main(int argc, char* argv[])
 			fclose(msgf);
 
 		free(tmp);
-	}	//coding
-	else if(mode_d)
+	}	//end coding
+	else if(mode_d)		//decoding mode
 	{
 		int N;
 		char msg[BUFSIZ];
@@ -239,11 +249,11 @@ int main(int argc, char* argv[])
 
 			fclose(keyf);
 
-		//decryptying
+		//decrypting
 		out = dcrypt(msg, N, key);
 		tmp = out;
 
-		//writing decodec text
+		//writing decoded text
 			msgf = fopen(argv[2], "w");
 			
 			if(msgf == NULL)
@@ -258,8 +268,8 @@ int main(int argc, char* argv[])
 			fclose(msgf);
 
 		free(tmp);
-	}	//decoding
-	else
+	}	//end decode
+	else		//if unknown mode set
 	{
 		printf("%s: bad syntax\n", argv[0]);
 		return -2;
