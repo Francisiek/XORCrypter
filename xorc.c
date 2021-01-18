@@ -6,6 +6,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/syscall.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+
 
 //enume for older standards
 typedef enum {FALSE=0, TRUE=1} bool;
@@ -38,7 +44,7 @@ char* crypt(const char* text, const char* key)
 	int N = strlen(text);
 	int M = strlen(key);
 	
-	char* out = malloc((N+1) * sizeof(char));
+	char* out = malloc(N * sizeof(char));
 	
 	int x = 2;
 	int pom = 0;
@@ -59,16 +65,16 @@ char* crypt(const char* text, const char* key)
 			++x;
 	}
 	
-	out[N] = '\0';
-	
 	return out;
 }
 
 //decrypting func
-char* dcrypt(const char* text, int N, const char* key)
+char* dcrypt(const char* text, const char* key)
 {
+	int N = strlen(text);
 	int M = strlen(key);
-	char* out = malloc((N+1) * sizeof(char));
+
+	char* out = malloc(N * sizeof(char));
 	
 	int x = 2;
 	int pom = 0;
@@ -89,8 +95,6 @@ char* dcrypt(const char* text, int N, const char* key)
 			++x;
 	}
 	
-	out[N]='\0';
-
 	return out;
 }
 
@@ -98,11 +102,12 @@ char* dcrypt(const char* text, int N, const char* key)
 int main(int argc, char* argv[])
 {
 	bool mode_c, mode_d;
-	FILE *msgf, *keyf;
-	
+	int msg_fd, key_fd;
+	struct stat msg_st, key_st;
+
 	//default values
 	mode_c = mode_d = FALSE;
-	msgf = keyf = NULL;
+	msg_fd = key_fd = NULL;
 
 	//arguments
 	if(argc > 1)
@@ -140,134 +145,99 @@ int main(int argc, char* argv[])
 	//crytping
 	if(mode_c)
 	{
-		char msg[BUFSIZ];
-		char key[BUFSIZ];
-		char *out, *tmp;
+		msg_fd = open(argv[2], O_RDWR, 0);
+		key_fd = open(argv[3], O_RDWR, 0);
+		fstat(msg_fd, &msg_st);
+		fstat(key_fd, &key_st);
+
+		char* msg = (char*)malloc(sizeof(char) * (msg_st.st_size + 1));
+		char* key = (char*)malloc(sizeof(char) * (key_st.st_size + 1));
+		char *out;
 
 		//performing text file
+		if(msg_fd == NULL)
 		{
-			char c;
-			int it=0;
-			
-			msgf = fopen(argv[2], "r");
-			
-			if(msgf == NULL)
-			{
-				printf("%s: can't open file - %s\n", argv[0], argv[2]);
-				return -1;
-			}
-
-			while((c = getc(msgf)) != EOF && (it != BUFSIZ))
-				msg[it++] = c;	
-			
-			msg[it] = '\0';
-
-			fclose(msgf);
-		}
-		//performing key
-		{
-			char c;
-			int it=0;
-			
-			keyf = fopen(argv[3], "r");
-			
-			if(keyf == NULL)
-			{
-				printf("%s: can't open file - %s\n", argv[0], argv[3]);
-				return -1;
-			}
-
-			while((c = getc(keyf)) != EOF && (it != BUFSIZ))
-				key[it++] = c;
-				
-			key[it] = '\0';
-
-			fclose(keyf);
+			printf("%s: can't open file - %s\n", argv[0], argv[2]);
+			return -1;
 		}
 		
+		read(msg_fd, msg, msg_st.st_size * sizeof(char));		
+		msg[msg_st.st_size] = '\0';
+		//performing key
+
+		
+		if(key_fd == NULL)
+		{
+			printf("%s: can't open file - %s\n", argv[0], argv[3]);
+			return -1;
+		}
+
+		read(key_fd, key, key_st.st_size * sizeof(char));
+		key[key_st.st_size] = '\0';
+		
+
 		//calling crypt fun
 		out = crypt(msg, key);
-		tmp = out;
-		
-		int N = strlen(msg);
 		
 		//writing coded text
-			msgf = fopen(argv[2], "wb");
-			
-			if(msgf == NULL)
-			{
-				printf("%s: can't open file - %s\n", argv[0], argv[2]);
-				return -1;
-			}
-			
-			fwrite(&N, sizeof(int), 1, msgf);
-						
-			fwrite(out, sizeof(char), N, msgf);
-			
-			fclose(msgf);
+		lseek(msg_fd, 0L, 0);
+		write(msg_fd, out, msg_st.st_size);
+		
+		close(msg_fd);
+		close(key_fd);
 
-		free(tmp);
+		free(msg);
+		free(key);
+		free(out);
+
 	}	//end coding
 	else if(mode_d)		//decoding mode
-	{
-		int N;
-		char msg[BUFSIZ];
-		char key[BUFSIZ];
-		char *out, *tmp;
+	{	
+
+		msg_fd = open(argv[2], O_RDWR, 0);
+		key_fd = open(argv[3], O_RDWR, 0);
+		fstat(msg_fd, &msg_st);
+		fstat(key_fd, &key_st);
+
+		char* msg = (char*)malloc(msg_st.st_size + sizeof(char));
+		char* key = (char*)malloc(key_st.st_size + 1);
+		char *out;
+	
 
 		//performing binary file
-			msgf = fopen(argv[2], "rb");
-			
-			if(msgf == NULL)
-			{
-				printf("%s: can't open file - %s\n", argv[0], argv[2]);
-				return -1;
-			}
-			
-			fread(&N, sizeof(int), 1, msgf);
-						
-			fread(msg, sizeof(char), N, msgf);
-			
-			fclose(msgf);
+		if(msg_fd == NULL)
+		{
+			printf("%s: can't open file - %s\n", argv[0], argv[2]);
+			return -1;
+		}
 		
-		//performing key
-			char c;
-			int it=0;
-			
-			keyf = fopen(argv[3], "r");
-			
-			if(keyf == NULL)
-			{
-				printf("%s: can't open file - %s\n", argv[0], argv[3]);
-				return -1;
-			}
+		read(msg_fd, msg, msg_st.st_size);
+		msg[msg_st.st_size] = '\0';
 	
-			while((c = getc(keyf)) != EOF && (it != BUFSIZ))
-				key[it++] = c;
-				
-			key[it] = '\0';
+	//performing key
+		if(key_fd == NULL)
+		{
+			printf("%s: can't open file - %s\n", argv[0], argv[3]);
+			return -1;
+		}
 
-			fclose(keyf);
+		read(key_fd, key, key_st.st_size);
+		key[key_st.st_size] = '\0';
+
 
 		//decrypting
-		out = dcrypt(msg, N, key);
-		tmp = out;
+		out = dcrypt(msg, key);
 
 		//writing decoded text
-			msgf = fopen(argv[2], "w");
-			
-			if(msgf == NULL)
-			{
-				printf("%s: can't open file - %s\n", argv[0], argv[2]);
-				return -1;
-			}
-
-			while(*out)
-				putc(*out++, msgf);
-
-			fclose(msgf);
-
-		free(tmp);
+		lseek(msg_fd, 0L, 0);
+		write(msg_fd, out, msg_st.st_size);
+		
+		close(msg_fd);
+		close(key_fd);
+		
+		free(msg);
+		free(key);
+		free(out);
 	}	//end decode
 	else		//if unknown mode set
 	{
