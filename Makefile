@@ -3,10 +3,14 @@ C=gcc
 CFLAGS=-static
 
 all : xorc
+build : xorc
+
 
 xorc : xorc.c
 	$(C) $(CFLAGS) xorc.c -o xorc
-	rm -f .gitignore
+
+install: xorc
+	cp xorc /usr/local/bin
 
 uinstall :
-	rm xorc.c xorc README Makefile
+	rm -f xorc.c xorc README Makefile .gitignore

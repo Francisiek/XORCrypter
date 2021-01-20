@@ -2,30 +2,44 @@
 Thank you for downloading my software!
 XOR crypter for passwords and not only!
 
-BUILD
-To build program use 'make' command.
-
-USAGE
-Syntax : xorc [options] [message file] [key file]
-
-Program works with two arguments '-c' and '-d'.
--c means coding. Program tekes file, crypt it with key and then changes it to inary file with crytped text.
--d means decoding. Program takes already crypted BINARY file and change it's comtent to decrypted text.
-
-Please report any bugs at 'francisiek.yt@gmail.com'.
-Have fun! :)
-
 Take in mind that force of crypter depends on your key and every messege 
 crypted by this program can be break (but this takes a LOT of time). 
 I'm not taking any responsibility.
 
-XORCrypter v 1.2
+XORCrypter v 1.3
 Contact: 'francisiek.yt@gmail.com'
 Github: 'https://github.com/Francisiek'
 
-LICENSE
-Copyright (C) 2020 Francisiek
+BUILD
+To build program use 'make' command.
 
+INSTALL
+To install use 'sudo make install'
+
+UINSTALL
+Type 'make uinstall'
+
+USAGE
+Syntax : xorc [options] [message file] [key file]
+
+OPTIONS
+-c means coding. Program tekes file, crypt it with key and then turn it to crytped version.
+-d means decoding. Program takes already crypted file and decrypts it in this same file.
+
+ERRORS
+Values returned by program means:
+0 - everything's good
+1 - failed to open file
+2 - failed read/write to file
+3 - failed to allocate memory
+4 - bad argument syntax
+
+CONTACT
+Please report bugs at 'francisiek.yt@gmail.com'.
+Have fun! :)
+
+LICENSE
+Copyright (C) 2021 Francisiek
 This program is distributed under
 GNU General Public License v3.0 or later 'https://www.gnu.org/licenses/gpl.html'
 

@@ -1,27 +1,25 @@
-//Francisiek (C) 2020
-#define VERSION 1.2f
+//Francisiek (C) 2021
+#define VERSION 1.3f
 #define AUTHOR "Francisiek"
-#define LOG printf("log\n");
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/syscall.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 
 
-
 //enume for older standards
 typedef enum {FALSE=0, TRUE=1} bool;
+typedef unsigned long long int ULL;
 
 //-h -u argument
 void help(void)
 {
 	printf("\n\tUsage: xorc [arg] [msg file] [key file]\n\n");
-	printf("\t-c crypt the text file and change it's content to crypted binary numbers.\n\n");
-	printf("\t-d decrypt the binary file. Change it's content back to original text.\n\n");
+	printf("\t-c crypt text file and change it's content to crypted text.\n\n");
+	printf("\t-d decrypt the file. Change it's content back to original text.\n\n");
 	printf("\t-h, -u shows this message\n");
 	printf("\t-v show program info\n\n");
 }
@@ -29,74 +27,41 @@ void help(void)
 //-v argument
 void version(void)
 {
-	printf("\nXORCypter v. %.2f simple xor crypting files program\n", VERSION);
+	printf("\nXORCypter v. %.2f simple xor crypter\n", VERSION);
 	printf("Contact: 'francisiek.yt@gmail.com'\n");
 	printf("Github: 'https://github.com/Francisiek'\n\n");
-	printf("Copyright (C) 2020 Francisiek\n");
+	printf("Copyright (C) 2021 Francisiek\n");
 	printf("This program is distributed under\n");
 	printf("GNU General Public License v3.0 or later\n'https://www.gnu.org/licenses/gpl.html'\n\n");
 	
 }
 
-//crypting func
-char* crypt(const char* text, const char* key)
+//xcrypting func
+char* xcrypt(const char* text, ULL N, const char* key, ULL M)
 {
-	int N = strlen(text);
-	int M = strlen(key);
+	char* out = (char*)malloc(N * sizeof(char));
 	
-	char* out = malloc(N * sizeof(char));
-	
-	int x = 2;
-	int pom = 0;
-	for(int i=0; i<N; ++i)
+	ULL x = 2;
+	ULL pom = 0;
+	for(ULL i=0; i<N; ++i)
 	{
 		out[i] = text[i];
 		
-		pom = i%2;
+		pom = i & 1;
 		do
 		{
 			out[i] ^= key[pom];
 			
-			pom += x;
-			pom %= M;
-		} while(pom != i%2);
+			pom = (pom + x) % M;
+		} while(pom != (i & 1));
 
-		if(i%2)
+		if(i & 1)
 			++x;
 	}
 	
 	return out;
 }
 
-//decrypting func
-char* dcrypt(const char* text, const char* key)
-{
-	int N = strlen(text);
-	int M = strlen(key);
-
-	char* out = malloc(N * sizeof(char));
-	
-	int x = 2;
-	int pom = 0;
-	for(int i=0; i<N; ++i)
-	{
-		out[i] = text[i];
-		
-		pom = i%2;
-		do
-		{
-			out[i] ^= key[pom];
-		
-			pom += x;
-			pom %= M;
-		} while(pom != i%2);
-		
-		if(i%2)
-			++x;
-	}
-	
-	return out;
-}
 
 
 int main(int argc, char* argv[])
@@ -107,7 +72,7 @@ int main(int argc, char* argv[])
 
 	//default values
 	mode_c = mode_d = FALSE;
-	msg_fd = key_fd = NULL;
+	msg_fd = key_fd = -1;
 
 	//arguments
 	if(argc > 1)
@@ -132,7 +97,7 @@ int main(int argc, char* argv[])
 		if(argc != 4)
 		{
 			printf("%s: bad syntax\n", argv[0]);
-			return -2;
+			return 4;
 		}
 	}
 	else		//by default output help and version info
@@ -147,41 +112,55 @@ int main(int argc, char* argv[])
 	{
 		msg_fd = open(argv[2], O_RDWR, 0);
 		key_fd = open(argv[3], O_RDWR, 0);
-		fstat(msg_fd, &msg_st);
-		fstat(key_fd, &key_st);
-
-		char* msg = (char*)malloc(sizeof(char) * (msg_st.st_size + 1));
-		char* key = (char*)malloc(sizeof(char) * (key_st.st_size + 1));
-		char *out;
 
 		//performing text file
-		if(msg_fd == NULL)
+		if(msg_fd < 0 || fstat(msg_fd, &msg_st) < 0)
 		{
 			printf("%s: can't open file - %s\n", argv[0], argv[2]);
-			return -1;
+			return 1;
 		}
-		
-		read(msg_fd, msg, msg_st.st_size * sizeof(char));		
-		msg[msg_st.st_size] = '\0';
-		//performing key
-
-		
-		if(key_fd == NULL)
+	
+		if(key_fd < 0 || fstat(key_fd, &key_st) < 0)
 		{
 			printf("%s: can't open file - %s\n", argv[0], argv[3]);
-			return -1;
+			return 1;
 		}
 
-		read(key_fd, key, key_st.st_size * sizeof(char));
-		key[key_st.st_size] = '\0';
+		char* msg = (char*)malloc(msg_st.st_size);
+		char* key = (char*)malloc(key_st.st_size);
+		char *out;
 		
+		if(msg == NULL || key == NULL)
+		{
+			printf("%s: can't allocate memory\n", argv[0]);
+			return 3;
+		}
+		
+		//read msg
+		if(read(msg_fd, msg, msg_st.st_size) != msg_st.st_size)
+		{
+			printf("%s: %s file reading failed\n", argv[0], argv[2]);
+			return 2;
+		}
+		
+		//read key
+		if(read(key_fd, key, key_st.st_size) != key_st.st_size)
+		{
+			printf("%s: %s file reading failed\n", argv[0], argv[3]);
+			return 2;
+		}
 
-		//calling crypt fun
-		out = crypt(msg, key);
+		//calling xcrypt fun
+		out = xcrypt(msg, msg_st.st_size, key, key_st.st_size);
 		
 		//writing coded text
 		lseek(msg_fd, 0L, 0);
-		write(msg_fd, out, msg_st.st_size);
+		if(write(msg_fd, out, msg_st.st_size) != msg_st.st_size)
+		{
+			printf("%s: %s file writing failed\n", argv[0], argv[2]);
+			return 2;
+		}
+		
 		
 		close(msg_fd);
 		close(key_fd);
@@ -196,42 +175,54 @@ int main(int argc, char* argv[])
 
 		msg_fd = open(argv[2], O_RDWR, 0);
 		key_fd = open(argv[3], O_RDWR, 0);
-		fstat(msg_fd, &msg_st);
-		fstat(key_fd, &key_st);
-
-		char* msg = (char*)malloc(msg_st.st_size + sizeof(char));
-		char* key = (char*)malloc(key_st.st_size + 1);
-		char *out;
-	
 
 		//performing binary file
-		if(msg_fd == NULL)
+		if(msg_fd < 0 || fstat(msg_fd, &msg_st) < 0)
 		{
 			printf("%s: can't open file - %s\n", argv[0], argv[2]);
-			return -1;
+			return 1;
 		}
-		
-		read(msg_fd, msg, msg_st.st_size);
-		msg[msg_st.st_size] = '\0';
 	
-	//performing key
-		if(key_fd == NULL)
+		if(key_fd < 0 || fstat(key_fd, &key_st) < 0)
 		{
 			printf("%s: can't open file - %s\n", argv[0], argv[3]);
-			return -1;
+			return 1;
 		}
 
-		read(key_fd, key, key_st.st_size);
-		key[key_st.st_size] = '\0';
+		char* msg = (char*)malloc(msg_st.st_size);
+		char* key = (char*)malloc(key_st.st_size);
+		char *out;
+	
+		if(msg == NULL || key == NULL)
+		{
+			printf("%s: can't allocate memory\n", argv[0]);
+			return 3;
+		}
+	
+		//read msg
+		if(read(msg_fd, msg, msg_st.st_size) != msg_st.st_size)
+		{
+			printf("%s: %s file reading failed\n", argv[0], argv[2]);
+			return 2;
+		}
 
+		//read key
+		if(read(key_fd, key, key_st.st_size) != key_st.st_size)
+		{
+			printf("%s: %s file reading failed\n", argv[0], argv[3]);
+			return 2;
+		}
 
-		//decrypting
-		out = dcrypt(msg, key);
+		//dexcrypting
+		out = xcrypt(msg, msg_st.st_size, key, key_st.st_size);
 
 		//writing decoded text
 		lseek(msg_fd, 0L, 0);
-		write(msg_fd, out, msg_st.st_size);
-		
+		if(write(msg_fd, out, msg_st.st_size) != msg_st.st_size)
+		{
+			printf("%s: %s file writing failed\n", argv[0], argv[2]);
+			return 2;
+		}
 		close(msg_fd);
 		close(key_fd);
 		
@@ -242,7 +233,7 @@ int main(int argc, char* argv[])
 	else		//if unknown mode set
 	{
 		printf("%s: bad syntax\n", argv[0]);
-		return -2;
+		return 4;
 	}
 
 	return 0;
