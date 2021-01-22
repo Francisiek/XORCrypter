@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
 
 
 //enume for older standards
@@ -17,11 +18,13 @@ typedef unsigned long long int ULL;
 //-h -u argument
 void help(void)
 {
-	printf("\n\tUsage: xorc [arg] [msg file] [key file]\n\n");
-	printf("\t-c crypt text file and change it's content to crypted text.\n\n");
-	printf("\t-d decrypt the file. Change it's content back to original text.\n\n");
-	printf("\t-h, -u shows this message\n");
-	printf("\t-v show program info\n\n");
+	printf("\n\tUsage: xorc [-hvu] or [text file] [key file]\n\n");
+	printf("\tPorogram crypts [text file] with [key file] by \n");
+	printf("\tchanging it's content to crypted mess.\n");
+	printf("\tTo decrypt, crypt file once more with the same key.\n");
+	printf("\n\tARGS\n\t-h, -u shows this message\n");
+	printf("\t-v show program info\n");
+	printf("\tno args shows -v and -h\n\n");
 }
 
 //-v argument
@@ -66,35 +69,30 @@ char* xcrypt(const char* text, ULL N, const char* key, ULL M)
 
 int main(int argc, char* argv[])
 {
-	bool mode_c, mode_d;
+	bool mode_c;
 	int msg_fd, key_fd;
 	struct stat msg_st, key_st;
 
 	//default values
-	mode_c = mode_d = FALSE;
+	mode_c = TRUE;
 	msg_fd = key_fd = -1;
 
 	//arguments
 	if(argc > 1)
 	{
-		int i = 1;
-		
-		while(argv[1][i])
+		if(!strcmp(argv[1], "-v"))
 		{
-			//setting modes
-			switch(argv[1][i])
-			{
-				case 'c': mode_c = TRUE; break;
-				case 'd': mode_d = TRUE; break;
-				case 'v': version(); return 0;  break;
-				case 'h': help(); return 0; break;
-				case 'u': help(); return 0; break;
-			}
-			++i;
+			version();
+			return 0;
 		}
-		
-		//erros less than 3 arguments
-		if(argc != 4)
+		if(!strcmp(argv[1], "-h") || !strcmp(argv[1], "-u"))
+		{
+			help();
+			return 0;
+		}
+
+		//erros less than 2 arguments
+		if(argc != 3)
 		{
 			printf("%s: bad syntax\n", argv[0]);
 			return 4;
@@ -110,19 +108,19 @@ int main(int argc, char* argv[])
 	//crytping
 	if(mode_c)
 	{
-		msg_fd = open(argv[2], O_RDWR, 0);
-		key_fd = open(argv[3], O_RDWR, 0);
+		msg_fd = open(argv[1], O_RDWR, 0);
+		key_fd = open(argv[2], O_RDWR, 0);
 
 		//performing text file
 		if(msg_fd < 0 || fstat(msg_fd, &msg_st) < 0)
 		{
-			printf("%s: can't open file - %s\n", argv[0], argv[2]);
+			printf("%s: can't open file - %s\n", argv[0], argv[1]);
 			return 1;
 		}
 	
 		if(key_fd < 0 || fstat(key_fd, &key_st) < 0)
 		{
-			printf("%s: can't open file - %s\n", argv[0], argv[3]);
+			printf("%s: can't open file - %s\n", argv[0], argv[2]);
 			return 1;
 		}
 
@@ -139,14 +137,14 @@ int main(int argc, char* argv[])
 		//read msg
 		if(read(msg_fd, msg, msg_st.st_size) != msg_st.st_size)
 		{
-			printf("%s: %s file reading failed\n", argv[0], argv[2]);
+			printf("%s: %s file reading failed\n", argv[0], argv[1]);
 			return 2;
 		}
 		
 		//read key
 		if(read(key_fd, key, key_st.st_size) != key_st.st_size)
 		{
-			printf("%s: %s file reading failed\n", argv[0], argv[3]);
+			printf("%s: %s file reading failed\n", argv[0], argv[2]);
 			return 2;
 		}
 
@@ -157,10 +155,9 @@ int main(int argc, char* argv[])
 		lseek(msg_fd, 0L, 0);
 		if(write(msg_fd, out, msg_st.st_size) != msg_st.st_size)
 		{
-			printf("%s: %s file writing failed\n", argv[0], argv[2]);
+			printf("%s: %s file writing failed\n", argv[0], argv[1]);
 			return 2;
-		}
-		
+		}		
 		
 		close(msg_fd);
 		close(key_fd);
@@ -170,66 +167,6 @@ int main(int argc, char* argv[])
 		free(out);
 
 	}	//end coding
-	else if(mode_d)		//decoding mode
-	{	
-
-		msg_fd = open(argv[2], O_RDWR, 0);
-		key_fd = open(argv[3], O_RDWR, 0);
-
-		//performing binary file
-		if(msg_fd < 0 || fstat(msg_fd, &msg_st) < 0)
-		{
-			printf("%s: can't open file - %s\n", argv[0], argv[2]);
-			return 1;
-		}
-	
-		if(key_fd < 0 || fstat(key_fd, &key_st) < 0)
-		{
-			printf("%s: can't open file - %s\n", argv[0], argv[3]);
-			return 1;
-		}
-
-		char* msg = (char*)malloc(msg_st.st_size);
-		char* key = (char*)malloc(key_st.st_size);
-		char *out;
-	
-		if(msg == NULL || key == NULL)
-		{
-			printf("%s: can't allocate memory\n", argv[0]);
-			return 3;
-		}
-	
-		//read msg
-		if(read(msg_fd, msg, msg_st.st_size) != msg_st.st_size)
-		{
-			printf("%s: %s file reading failed\n", argv[0], argv[2]);
-			return 2;
-		}
-
-		//read key
-		if(read(key_fd, key, key_st.st_size) != key_st.st_size)
-		{
-			printf("%s: %s file reading failed\n", argv[0], argv[3]);
-			return 2;
-		}
-
-		//dexcrypting
-		out = xcrypt(msg, msg_st.st_size, key, key_st.st_size);
-
-		//writing decoded text
-		lseek(msg_fd, 0L, 0);
-		if(write(msg_fd, out, msg_st.st_size) != msg_st.st_size)
-		{
-			printf("%s: %s file writing failed\n", argv[0], argv[2]);
-			return 2;
-		}
-		close(msg_fd);
-		close(key_fd);
-		
-		free(msg);
-		free(key);
-		free(out);
-	}	//end decode
 	else		//if unknown mode set
 	{
 		printf("%s: bad syntax\n", argv[0]);

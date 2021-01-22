@@ -20,11 +20,16 @@ UINSTALL
 Type 'make uinstall'
 
 USAGE
-Syntax : xorc [options] [message file] [key file]
+Usage: xorc [-hvu] or [text file] [key file]
+Porogram crypts [text file] with [key file] by
+changing it's content to crypted mess.
+To decrypt, crypt file once more with the same key.
+To conclude, if you crypt your file even number of times, the file will be like it was before.
 
-OPTIONS
--c means coding. Program tekes file, crypt it with key and then turn it to crytped version.
--d means decoding. Program takes already crypted file and decrypts it in this same file.
+ARGS
+-h, -u shows this message
+-v show program info
+no args shows -v and -h
 
 ERRORS
 Values returned by program means:

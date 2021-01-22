@@ -13,4 +13,4 @@ install: xorc
 	cp xorc /usr/local/bin
 
 uinstall :
-	rm -f xorc.c xorc README Makefile .gitignore
+	rm -f /usr/local/bin/xorc
