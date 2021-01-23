@@ -31,7 +31,7 @@ void help(void)
 void version(void)
 {
 	printf("\nXORCypter v. %.2f simple xor crypter\n", VERSION);
-	printf("Contact: 'francisiek.yt@gmail.com'\n");
+	printf("Contact: 'frx30340@protonmail.com'\n");
 	printf("Github: 'https://github.com/Francisiek'\n\n");
 	printf("Copyright (C) 2021 Francisiek\n");
 	printf("This program is distributed under\n");
