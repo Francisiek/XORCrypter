@@ -20,7 +20,7 @@ UINSTALL
 Type 'make uinstall'
 
 USAGE
-Usage: xorc [-hvu] or [text file] [key file]
+Usage: xorc -[hvu] or [text file] [key file]
 Porogram crypts [text file] with [key file] by
 changing it's content to crypted mess.
 To decrypt, crypt file once more with the same key.
