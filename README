@@ -16,11 +16,11 @@ To build program use 'make' command.
 INSTALL
 To install use 'sudo make install'
 
-UINSTALL
-Type 'make uinstall'
+UNINSTALL
+Type 'make uninstall'
 
 USAGE
-Usage: xorc [-hvu] or [text file] [key file]
+Usage: xorc -[hvu] or [text file] [key file]
 Porogram crypts [text file] with [key file] by
 changing it's content to crypted mess.
 To decrypt, crypt file once more with the same key.
