@@ -4,77 +4,122 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
 
 
-//enume for older standards
-typedef enum {FALSE=0, TRUE=1} bool;
+//why not your own bool?
+typedef enum {FALSE = 0, TRUE = 1} bool;
 typedef unsigned long long int ULL;
+
+//global variable to store argv[0]
+char* prog_name;
+void* alloc_mem[3];
 
 //-h -u argument
 void help(void)
 {
-	printf("\n\tUsage: xorc [-hvu] or [text file] [key file]\n\n");
-	printf("\tPorogram crypts [text file] with [key file] by \n");
-	printf("\tchanging it's content to crypted mess.\n");
-	printf("\tTo decrypt, crypt file once more with the same key.\n");
-	printf("\n\tARGS\n\t-h, -u shows this message\n");
-	printf("\t-v show program info\n");
-	printf("\tno args shows -v and -h\n\n");
+	printf("Usage: xorc [-hvu] or [text_file] [key_file]\n");
+	printf("\n-h, -u\tshows help\n");
+	printf("-v\tshow program info\n");
+	printf("no args shows -v and -h\n");
+	printf("\nPorogram crypts text_file with key_file.\n");
+	printf("To decrypt, crypt file once more with the same key.\n\n");
 }
 
 //-v argument
 void version(void)
 {
-	printf("\nXORCypter v. %.2f simple xor crypter\n", VERSION);
+	printf("XORCypter v%.2f simple xor crypter\n", VERSION);
 	printf("Contact: 'frx30340@protonmail.com'\n");
 	printf("Github: 'https://github.com/Francisiek'\n\n");
 	printf("Copyright (C) 2021 Francisiek\n");
 	printf("This program is distributed under\n");
-	printf("GNU General Public License v3.0 or later\n'https://www.gnu.org/licenses/gpl.html'\n\n");
+	printf("GNU General Public License v3.0 or later\n");
+	printf("'https://www.gnu.org/licenses/gpl.html'\n");
 	
 }
 
-//xcrypting func
-char* xcrypt(const char* text, ULL N, const char* key, ULL M)
+void free_mem(void)
 {
-	char* out = (char*)malloc(N * sizeof(char));
+	for(int i = 0; i < 3; i++)
+		if(alloc_mem[i])
+			free(alloc_mem[i]);
+}
+
+void handle_err(int rt, char* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+
+	while(*format)
+	{
+		if(strncmp(format, "%d", 2) == 0)
+		{
+			fprintf(stderr, "%d", va_arg(args, int));
+			format += 2;
+		}
+		else if(strncmp(format, "%s", 2) == 0)
+		{
+			fprintf(stderr, "%s", va_arg(args, char*));
+			format += 2;
+		}
+		else
+		{
+			fprintf(stderr, "%c", *format);
+			format++;
+		}
+	}
+
+	va_end(args);
+	exit(rt);
+}
+
+
+//xcrypting function
+char* xcrypt(const char* text, ULL text_size, const char* key, ULL key_size)
+{
+	char* out = (char*)malloc(text_size);
+	if(out == NULL)
+		handle_err(3, "%s: can't allocate memory\n", prog_name);
 	
-	ULL x = 2;
-	ULL pom = 0;
-	for(ULL i=0; i<N; ++i)
+	alloc_mem[2] = out;
+	
+	ULL cur_jmp = 2;
+	ULL indx = 0;
+
+	for(ULL i = 0; i < text_size; ++i)
 	{
 		out[i] = text[i];
 		
-		pom = i & 1;
+		indx = i & 1;
 		do
 		{
-			out[i] ^= key[pom];
+			out[i] ^= key[indx];
 			
-			pom = (pom + x) % M;
-		} while(pom != (i & 1));
+			indx = (indx + cur_jmp) % key_size;
+		} while(indx != (i & 1));
 
 		if(i & 1)
-			++x;
+			++cur_jmp;
 	}
 	
 	return out;
 }
 
-
-
 int main(int argc, char* argv[])
 {
-	bool mode_c;
 	int msg_fd, key_fd;
 	struct stat msg_st, key_st;
 
 	//default values
-	mode_c = TRUE;
 	msg_fd = key_fd = -1;
+	prog_name = argv[0];
+	
+	atexit(free_mem);
 
 	//arguments
 	if(argc > 1)
@@ -84,93 +129,63 @@ int main(int argc, char* argv[])
 			version();
 			return 0;
 		}
+
 		if(!strcmp(argv[1], "-h") || !strcmp(argv[1], "-u"))
 		{
 			help();
 			return 0;
 		}
-
-		//erros less than 2 arguments
+		
+		//error bad args
 		if(argc != 3)
-		{
-			printf("%s: bad syntax\n", argv[0]);
-			return 4;
-		}
+			handle_err(4, "%s: bad syntax\n", argv[0]);
+
 	}
 	else		//by default output help and version info
 	{
-		version();
 		help();
+		version();
 		return 0;
 	}
 	
 	//crytping
-	if(mode_c)
-	{
-		msg_fd = open(argv[1], O_RDWR, 0);
-		key_fd = open(argv[2], O_RDWR, 0);
+	msg_fd = open(argv[1], O_RDWR, 0);
+	key_fd = open(argv[2], O_RDWR, 0);
 
-		//performing text file
-		if(msg_fd < 0 || fstat(msg_fd, &msg_st) < 0)
-		{
-			printf("%s: can't open file - %s\n", argv[0], argv[1]);
-			return 1;
-		}
+	//getting files sizes
+	if(msg_fd < 0 || fstat(msg_fd, &msg_st) < 0)
+		handle_err(1, "%s: can't open file - %s\n", argv[0], argv[1]);
+
+	if(key_fd < 0 || fstat(key_fd, &key_st) < 0)
+		handle_err(1, "%s: can't open file - %s\n", argv[0], argv[2]);
+
+	char* msg = (char*)malloc(msg_st.st_size);
+	char* key = (char*)malloc(key_st.st_size);
+	char* out;
 	
-		if(key_fd < 0 || fstat(key_fd, &key_st) < 0)
-		{
-			printf("%s: can't open file - %s\n", argv[0], argv[2]);
-			return 1;
-		}
+	if(msg == NULL || key == NULL)
+		handle_err(3, "%s: can't allocate memory\n", argv[0]);
+	
+	alloc_mem[0] = msg;
+	alloc_mem[1] = key;
 
-		char* msg = (char*)malloc(msg_st.st_size);
-		char* key = (char*)malloc(key_st.st_size);
-		char *out;
-		
-		if(msg == NULL || key == NULL)
-		{
-			printf("%s: can't allocate memory\n", argv[0]);
-			return 3;
-		}
-		
-		//read msg
-		if(read(msg_fd, msg, msg_st.st_size) != msg_st.st_size)
-		{
-			printf("%s: %s file reading failed\n", argv[0], argv[1]);
-			return 2;
-		}
-		
-		//read key
-		if(read(key_fd, key, key_st.st_size) != key_st.st_size)
-		{
-			printf("%s: %s file reading failed\n", argv[0], argv[2]);
-			return 2;
-		}
+	//read msg
+	if(read(msg_fd, msg, msg_st.st_size) != msg_st.st_size)
+		handle_err(2, "%s: %s file reading failed\n", argv[0], argv[1]);
+	
+	//read key
+	if(read(key_fd, key, key_st.st_size) != key_st.st_size)
+		handle_err(2, "%s: %s file reading failed\n", argv[0], argv[2]);
 
-		//calling xcrypt fun
-		out = xcrypt(msg, msg_st.st_size, key, key_st.st_size);
-		
-		//writing coded text
-		lseek(msg_fd, 0L, 0);
-		if(write(msg_fd, out, msg_st.st_size) != msg_st.st_size)
-		{
-			printf("%s: %s file writing failed\n", argv[0], argv[1]);
-			return 2;
-		}		
-		
-		close(msg_fd);
-		close(key_fd);
+	//calling xcrypt fun
+	out = xcrypt(msg, msg_st.st_size, key, key_st.st_size);
+	
+	//writing to file
+	lseek(msg_fd, 0L, 0);
 
-		free(msg);
-		free(key);
-		free(out);
-
-	}	//end coding
-	else		//if unknown mode set
-	{
-		printf("%s: bad syntax\n", argv[0]);
-		return 4;
-	}
-
-	return 0;
+	if(write(msg_fd, out, msg_st.st_size) != msg_st.st_size)
+		handle_err(2, "%s: %s file writing failed\n", argv[0], argv[1]);
+	
+	exit(0);
 }
+

@@ -1,20 +1,21 @@
 
+XORCrypter v1.3
+Contact: 'frx30340@protonmail.com'
+Github: 'https://github.com/Francisiek'
+
 Thank you for downloading my software!
 XOR crypter for passwords and not only!
 
-Take in mind that force of crypter depends on your key and every messege 
-crypted by this program can be break (but this takes a LOT of time). 
+Take in mind that force of crypter depends on your key 
+and every messege encrypted by this program can be broke 
+(but this takes a LOT of time). 
 I'm not taking any responsibility.
-
-XORCrypter v 1.3
-Contact: 'frx30340@protonmail.com'
-Github: 'https://github.com/Francisiek'
 
 BUILD
 To build program use 'make' command.
 
 INSTALL
-To install use 'sudo make install'
+To install use 'make install'
 
 UNINSTALL
 Type 'make uninstall'
@@ -24,10 +25,11 @@ Usage: xorc -[hvu] or [text file] [key file]
 Porogram crypts [text file] with [key file] by
 changing it's content to crypted mess.
 To decrypt, crypt file once more with the same key.
-To conclude, if you crypt your file even number of times, the file will be like it was before.
+To conclude, if you crypt your file even number of times, 
+the file will be like it was before.
 
 ARGS
--h, -u shows this message
+-h, -u shows help
 -v show program info
 no args shows -v and -h
 
@@ -37,10 +39,11 @@ Values returned by program means:
 1 - failed to open file
 2 - failed read/write to file
 3 - failed to allocate memory
-4 - bad argument syntax
+4 - bad arguments syntax
 
 CONTACT
 Please report bugs at 'frx30340@protonmail.com'.
+
 Have fun! :)
 
 LICENSE

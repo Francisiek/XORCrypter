@@ -17,4 +17,4 @@ clean :
 	rm -f xorc /usr/local/bin/xorc
 
 realclean : clean
-	rm -f xorc.c README Makefile
+	rm -f xorc.c README Makefile .gitgnore
