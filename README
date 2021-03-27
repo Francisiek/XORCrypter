@@ -22,7 +22,7 @@ Type 'make uninstall'
 
 USAGE
 Usage: xorc -[hvu] or [text file] [key file]
-Porogram crypts [text file] with [key file] by
+Program crypts [text file] with [key file] by
 changing it's content to crypted mess.
 To decrypt, crypt file once more with the same key.
 To conclude, if you crypt your file even number of times, 
@@ -33,8 +33,12 @@ ARGS
 -v show program info
 no args shows -v and -h
 
+EXAMPLES
+xorc my_secret_msg key
+xorc -v
+
 ERRORS
-Values returned by program means:
+Values returned by program mean:
 0 - everything's good
 1 - failed to open file
 2 - failed read/write to file
