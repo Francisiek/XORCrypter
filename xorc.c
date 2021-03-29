@@ -26,14 +26,14 @@ void help(void)
 	printf("\n-h, -u\tshows help\n");
 	printf("-v\tshow program info\n");
 	printf("no args shows -v and -h\n");
-	printf("\nPorogram crypts text_file with key_file.\n");
+	printf("\nProgram crypts text_file with key_file.\n");
 	printf("To decrypt, crypt file once more with the same key.\n\n");
 }
 
 //-v argument
 void version(void)
 {
-	printf("XORCypter v%.2f simple xor crypter\n", VERSION);
+	printf("XORCrypter v%.2f simple xor crypter\n", VERSION);
 	printf("Contact: 'frx30340@protonmail.com'\n");
 	printf("Github: 'https://github.com/Francisiek'\n\n");
 	printf("Copyright (C) 2021 Francisiek\n");
@@ -148,7 +148,7 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 	
-	//crytping
+	//crypting
 	msg_fd = open(argv[1], O_RDWR, 0);
 	key_fd = open(argv[2], O_RDWR, 0);
 
