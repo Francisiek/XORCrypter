@@ -22,7 +22,7 @@ void* alloc_mem[3];
 //-h -u argument
 void help(void)
 {
-	printf("Usage: xorc [-hvu] or [text_file] [key_file]\n");
+	printf("Usage: xorc -[hvu] or [text_file] [key_file]\n");
 	printf("\n-h, -u\tshows help\n");
 	printf("-v\tshow program info\n");
 	printf("no args shows -v and -h\n");
@@ -75,6 +75,8 @@ void handle_err(int rt, char* format, ...)
 	}
 
 	va_end(args);
+
+	free_mem();
 	exit(rt);
 }
 
@@ -124,22 +126,27 @@ int main(int argc, char* argv[])
 	//arguments
 	if(argc > 1)
 	{
-		if(!strcmp(argv[1], "-v"))
+		char opt;
+		while((opt = getopt(argc, argv, "vhu")) != -1)
 		{
-			version();
-			return 0;
+			case 'v':
+				version();
+				return 0;
+			break;
+			case 'h':
+				help();
+				return 0;
+			break;
+			case 'u':
+				help();
+				return 0;
+			break;
+			default:
+				handle_err(4, "");
 		}
 
-		if(!strcmp(argv[1], "-h") || !strcmp(argv[1], "-u"))
-		{
-			help();
-			return 0;
-		}
-		
-		//error bad args
-		if(argc != 3)
+		if(argc <= 2)
 			handle_err(4, "%s: bad syntax\n", argv[0]);
-
 	}
 	else		//by default output help and version info
 	{
