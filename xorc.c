@@ -129,20 +129,23 @@ int main(int argc, char* argv[])
 		char opt;
 		while((opt = getopt(argc, argv, "vhu")) != -1)
 		{
-			case 'v':
-				version();
-				return 0;
-			break;
-			case 'h':
-				help();
-				return 0;
-			break;
-			case 'u':
-				help();
-				return 0;
-			break;
-			default:
-				handle_err(4, "");
+			switch(opt)
+			{
+				case 'v':
+					version();
+					return 0;
+				break;
+				case 'h':
+					help();
+					return 0;
+				break;
+				case 'u':
+					help();
+					return 0;
+				break;
+				default:
+					handle_err(4, "");
+			}
 		}
 
 		if(argc <= 2)
