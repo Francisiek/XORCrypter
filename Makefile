@@ -3,12 +3,13 @@ CFLAGS=-static -Wall -std=c99 -g
 VERSION=1.4
 NAME=xorc-$(VERSION)
 DEPEND=src/main.c src/handle_err.c src/mem.c src/xorc.c src/base64/base64.c
+HEADERS=src/handle_err.h src/mem.h src/xorc.h src/base64/base64.h
 FILES=$(NAME)/src $(NAME)/Makefile $(NAME)/README
 
 
 all : xorc
 
-xorc : xorc.c
+xorc : $(DEPEND) $(HEADERS)
 	$(CC) $(CFLAGS) $(DEPEND) -o xorc
 
 install : xorc
