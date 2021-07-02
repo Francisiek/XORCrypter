@@ -31,7 +31,7 @@ pack: ../$(NAME).tar.xz ../$(NAME).tar.xz.SHA256-SIGNATURE
 	cd ..; tar cfJv $(NAME).tar.xz $(FILES)
 	cd ..; rm $(NAME)
 
-../$(NAME).tar.xz-SHA256-SIGNATURE: ../$(NAME).tar.xz
+../$(NAME).tar.xz.SHA256-SIGNATURE: ../$(NAME).tar.xz
 	cd ..; sha256sum $(NAME).tar.xz > $(NAME).tar.xz.SHA256-SIGNATURE
 
 packgz: ../$(NAME).tar.gz ../$(NAME).tar.gz.SHA256-SIGNATURE
@@ -42,6 +42,6 @@ packgz: ../$(NAME).tar.gz ../$(NAME).tar.gz.SHA256-SIGNATURE
 	cd ..; tar cfzv $(NAME).tar.gz $(FILES)
 	cd ..; rm $(NAME)
 
-../$(NAME).tar.gz-SHA256-SIGNATURE: ../$(NAME).tar.gz
+../$(NAME).tar.gz.SHA256-SIGNATURE: ../$(NAME).tar.gz
 	cd ..; sha256sum $(NAME).tar.gz > $(NAME).tar.gz.SHA256-SIGNATURE
 
