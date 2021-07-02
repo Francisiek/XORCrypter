@@ -1,11 +1,11 @@
 
-XORCrypter v1.3
+XORCrypter v1.4
 Contact: 'frx30340@protonmail.com'
 Github: 'https://github.com/Francisiek'
 
 Thank you for downloading my software!
 
-Take in mind that strength of encryption depends on your key 
+Keep in mind that strength of encryption depends on your key 
 and every message encrypted by this program can be broke 
 (but this takes a LOT of time). 
 I'm not taking any responsibility.
@@ -20,14 +20,16 @@ UNINSTALL
 Type 'make uninstall'
 
 USAGE
-Usage: xorc -[hvu] or [text file] [key file]
-Program crypts [text file] with [key file] by
-changing it's content to encrypted mess.
-To decrypt, crypt file once more with the same key.
+Usage: xorc -[hvu] or [data file] [key file] optional -[io]
+Program encrypts [data file] with [key file] using
+xor operations so it is symetric encryption.
+That means, to decrypt, crypt file once more with the same key.
 To conclude, if you crypt your file even number of times, 
 the file will be in its original form (before first encryption).
 
 ARGS
+-o output encrypted data in base64 format
+-i read input data as base64
 -h, -u shows help
 -v show program info
 no args shows -v and -h
@@ -35,6 +37,7 @@ no args shows -v and -h
 EXAMPLES
 xorc my_secret_msg key
 xorc -v
+xorc msg key -o
 
 ERRORS
 Values returned by program mean:
