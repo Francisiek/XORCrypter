@@ -1,0 +1,37 @@
+#!/bin/bash
+x=$(date +%s)
+for i in {1..1000}
+do
+	./random $((x * 34623 % 9045321)) > message_org
+	./random $((x * 9373232 % 1245723)) > key
+	
+	cat message_org
+	echo "--------------------"
+	cat key
+	echo
+
+	cp -f message_org message_cp
+
+	if ! .././xorc message_org key -o;
+	then
+		echo "$i failed"
+		break
+	fi
+	
+	if ! .././xorc message_org key -i;
+	then
+		echo "$i failed"
+		break
+	fi
+	
+	if ! diff message_org message_cp;
+	then
+		echo "$i test: not the same"
+		break
+	else
+		echo "$i good"
+	fi
+	echo
+	
+	x=$((x + 1))
+done
