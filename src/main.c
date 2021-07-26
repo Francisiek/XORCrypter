@@ -1,3 +1,20 @@
+/*
+	This file is part of XORCrypter.
+
+    XORCrypter is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Foobar is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with XORCrypter.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 //Francisiek (C) 2021
 #define VERSION "1.4"
 #define AUTHOR "Francisiek"
@@ -20,13 +37,14 @@
 void help(void)
 {
 	printf("%s",
-	"Usage: xorc -[hvu] or [text_file] [key_file]\n"
-	"\n-h, -u\tshows help\n"
-	"-v\tshow program info\n"
+	"Usage: xorc -[hvu] or [data_file] [key_file] -[io]\n"
+	"-o save encrypted data in base64 format\n"
+	"-i read input data in base64 format\n"
+	"-h, -u shows help\n"
+	"-v show program info\n"
 	"no args shows -v and -h\n"
-	"\nProgram crypts text_file with key_file.\n"
-	"To decrypt, crypt file once more with the same key.\n\n"
-	);
+	"\nProgram encrypts [data file] with [key file] using\n"
+	"xor operations so it is symetric encryption.\n"
 }
 
 //-v argument
@@ -99,13 +117,6 @@ int main(int argc, char* argv[])
 				case 'u':
 					help();
 					return 0;
-					break;
-				
-				case 'm':
-					
-					break;
-
-				case 'k':
 					break;
 				
 				case 'o':

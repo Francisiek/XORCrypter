@@ -28,8 +28,8 @@ To conclude, if you crypt your file even number of times,
 the file will be in its original form (before first encryption).
 
 ARGS
--o output encrypted data in base64 format
--i read input data as base64
+-o save encrypted data in base64 format
+-i read input data in base64 format
 -h, -u shows help
 -v show program info
 no args shows -v and -h
