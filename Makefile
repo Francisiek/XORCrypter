@@ -1,6 +1,6 @@
 
 CFLAGS=-static -Wall -std=c99 -g
-VERSION=1.4
+VERSION=1.5
 NAME=xorc-$(VERSION)
 DEPEND=src/main.c src/handle_err.c src/mem.c src/xorc.c src/base64/base64.c
 HEADERS=src/handle_err.h src/mem.h src/xorc.h src/base64/base64.h

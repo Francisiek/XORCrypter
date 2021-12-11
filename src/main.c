@@ -16,7 +16,7 @@
 */
 
 //Francisiek (C) 2021
-#define VERSION "1.4"
+#define VERSION "1.5"
 #define AUTHOR "Francisiek"
 
 #include <stdio.h>
@@ -44,7 +44,7 @@ void help(void)
 	"-v show program info\n"
 	"no args shows -v and -h\n"
 	"\nProgram encrypts [data file] with [key file] using\n"
-	"xor operations so it is symetric encryption.\n"
+	"xor operations so it is symetric encryption.\n");
 }
 
 //-v argument
@@ -64,7 +64,6 @@ void version(void)
 
 int main(int argc, char* argv[])
 {
-
 	/*
 	getopt swaps orded of argv so
 	we will give it a copy
@@ -79,28 +78,27 @@ int main(int argc, char* argv[])
 		strcpy(argv_copy[i], argv[i]);
 	}
 
-	/*
-	for(int i = 0; i < argc; ++i)
-	{
-		fprintf(stderr, "%s\n", argv[i]);
-	}
-	*/
-
 	int msg_fd, key_fd;
+	char* msg_name, *key_name;
 	int msglen, keylen, outlen;
 	struct stat msg_st, key_st;
 	bool base64_input, base64_output;
+	bool dont_save;
+
+	const int MAX_INPUT = 4096;
 
 	//default values
 	msg_fd = key_fd = -1;
+	msg_name = key_name = NULL;
 	base64_input = base64_output = false;
+	dont_save = false;
 	atexit(free_mem);
 
 	//arguments managment
 	if(argc > 1)
 	{
 		char opt;
-		while((opt = getopt(argc, (char**)argv_copy, "vhuoimk")) != -1)
+		while((opt = getopt(argc, (char**)argv_copy, "-vhuois")) != -1)
 		{
 			switch(opt)
 			{
@@ -127,6 +125,17 @@ int main(int argc, char* argv[])
 					base64_input = true;
 					break;
 				
+				case 's':
+					dont_save = true;
+				break;
+
+				case 1:
+					if (msg_name)
+						key_name = optarg;
+					else
+						msg_name = optarg;
+				break;
+
 				default:
 					handle_err(4, "");
 			}
@@ -143,27 +152,27 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-	/*
-	for(int i = 0; i < argc; ++i)
-	{
-		printf("%s\n", argv_copy[i]);
-	}
-	*/
-
 	//opening files
-	msg_fd = open(argv[1], O_RDONLY, 0);
-	key_fd = open(argv[2], O_RDONLY, 0);
+	msg_fd = msg_name == NULL || *msg_name == '-' ? 0 : open(msg_name, O_RDONLY, 0);
+	key_fd = key_name == NULL || *key_name == '-' ? 0 : open(key_name, O_RDONLY, 0);
 
 	//getting files sizes
-	if(msg_fd < 0 || fstat(msg_fd, &msg_st) < 0)
-		handle_err(1, "%s: can't open file - %s\n", argv[0], argv[1]);
+	if(msg_fd != 0 && (msg_fd < 0 || fstat(msg_fd, &msg_st) < 0))
+		handle_err(1, "%s: can't open file - %s\n", argv[0], msg_name);
 
-	if(key_fd < 0 || fstat(key_fd, &key_st) < 0)
-		handle_err(1, "%s: can't open file - %s\n", argv[0], argv[2]);
+	if(key_fd != 0 && (key_fd < 0 || fstat(key_fd, &key_st) < 0))
+		handle_err(1, "%s: can't open file - %s\n", argv[0], key_name);
 	
-	msglen = outlen = msg_st.st_size;
-	keylen = key_st.st_size;
+	if (msg_fd != 0)
+		msglen = outlen = msg_st.st_size;
+	else
+		msglen = outlen = MAX_INPUT;
 
+	if (key_fd != 0)
+		keylen = key_st.st_size;
+	else
+		keylen = MAX_INPUT;
+	
 	char* msg = (char*)malloc(msglen);
 	char* key = (char*)malloc(keylen);
 	char* output = (char*)malloc(msglen);
@@ -177,14 +186,37 @@ int main(int argc, char* argv[])
 	alloc_mem_add(output);
 
 	//read msg
-	if(read(msg_fd, msg, msglen) != msglen)
-		handle_err(2, "%s: %s file reading failed\n", argv[0], argv[1]);
+	if (msg_fd == 0)
+	{
+		char b;
+		int i = 0;
+		do
+		{
+			read(0, &b, 1);
+			msg[i++] = b;
+		} while (b != EOF && i < MAX_INPUT);
+		msglen = i;
+	}
+	else if(read(msg_fd, msg, msglen) != msglen)
+		handle_err(2, "%s: %s file reading failed\n", argv[0], msg_name);
 	
 	//read key
-	if(read(key_fd, key, keylen) != keylen)
-		handle_err(2, "%s: %s file reading failed\n", argv[0], argv[2]);
-	
-	close(msg_fd);
+	if (key_fd == 0)
+	{
+		char b;
+		int i = 0;
+		do
+		{
+			read(0, &b, 1);
+			key[i++] = b;
+		} while (b != EOF && i < MAX_INPUT);
+		keylen = i;
+	}
+	else if(read(key_fd, key, keylen) != keylen)
+		handle_err(2, "%s: %s file reading failed\n", argv[0], key_name);
+
+	if (msg_fd != 0)
+		close(msg_fd);
 	
 	if(base64_input)
 	{
@@ -202,14 +234,18 @@ int main(int argc, char* argv[])
 
 	//calling xcrypt function
 	xcrypt(msg, msglen, key, keylen, output);
-
-	//writing to file
-	//lseek(msg_fd, 0L, 0);
 	
-	msg_fd = open(argv[1], O_WRONLY | O_TRUNC, 0);
+	if (key_fd != 0)
+		close(key_fd);
+	
+	if (dont_save)
+		msg_fd = 1;
+	
+	if (msg_fd != 0 && msg_fd != 1)
+		msg_fd = open(argv[1], O_WRONLY | O_TRUNC, 0);
 
 	if(msg_fd < 0)
-		handle_err(1, "%s: can't open file - %s\n", argv[0], argv[1]);
+		handle_err(1, "%s: can't open file - %s\n", argv[0], msg_name);
 	
 	if(base64_output)
 	{
@@ -229,10 +265,10 @@ int main(int argc, char* argv[])
 	}
 	
 	if(write(msg_fd, output, outlen) != outlen)
-		handle_err(2, "%s: %s file writing failed\n", argv[0], argv[1]);
+		handle_err(2, "%s: %s file writing failed\n", argv[0], msg_name);
 	
-	close(msg_fd);
-	close(key_fd);
+	if (msg_fd > 2)
+		close(msg_fd);
 
 	//we're done!
 	exit(EXIT_SUCCESS);
