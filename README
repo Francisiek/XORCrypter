@@ -1,13 +1,13 @@
 
-XORCrypter v1.4
+XORCrypter v1.5
 Contact: 'frx30340@protonmail.com'
 Github: 'https://github.com/Francisiek'
 
 Thank you for downloading my software!
 
 Keep in mind that strength of encryption depends on your key 
-and every message encrypted by this program can be broke 
-(but this takes a LOT of time). 
+and every message encrypted by this program can be broken.
+(but this takes a lot of time). 
 I'm not taking any responsibility.
 
 BUILD
@@ -20,24 +20,40 @@ UNINSTALL
 Type 'make uninstall'
 
 USAGE
-Usage: xorc -[hvu] or [data file] [key file] optional -[io]
+Usage: xorc [data file] [key file] -[hvuios]
 Program encrypts [data file] with [key file] using
-xor operations so it is symetric encryption.
-That means, to decrypt, crypt file once more with the same key.
-To conclude, if you crypt your file even number of times, 
-the file will be in its original form (before first encryption).
+xor operations, so it is symetric encryption.
+
+Instead of file names you can use '-' (dash) to read from 
+standard input. First non option argument is treated as data file name,
+then second as key file name.
+If there are no file names program will read by deafault data and key
+from standard input.
+
+Symetric encryption means, to decrypt, crypt file once more with the same key.
+So if you crypt your file even number of times, 
+the file will be in it's original form (before first encryption).
 
 ARGS
--o save encrypted data in base64 format
--i read input data in base64 format
--h, -u shows help
--v show program info
+-o save encrypted data in base64 format.
+-i read input data in base64 format.
+-s don't save crypted data to original data file only
+print it to standard output.
+-h and -u shows general help.
+-v show program info.
 no args shows -v and -h
 
 EXAMPLES
-xorc my_secret_msg key
-xorc -v
-xorc msg key -o
+xorc my_secret_msg key - program encrypts data and saves it to my_secret_msg.
+xorc -v - program shows version info.
+xorc msg key -o - program encrypts data and saves it in base64 to msg.
+xorc msg - -s - program reads data from msg and key from standard input. Then
+because of -s option it prints encrypted data to standard output.
+xorc - - -o - reads data and key from standard input and prints it in base64
+Intead of previous command we can use:
+xorc -o - it does the same.
+xorc - key -io - read data from standard input in base64, key from file and 
+write encrypted data to standard output in base64.
 
 ERRORS
 Values returned by program mean:

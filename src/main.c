@@ -34,18 +34,23 @@
 #include "mem.h"
 #include "xorc.h"
 
-//-h -u argument
+// simple help
 void help(void)
 {
 	printf("%s",
-	"Usage: xorc -[hvu] or [data_file] [key_file] -[io]\n"
-	"-o save encrypted data in base64 format\n"
-	"-i read input data in base64 format\n"
-	"-h, -u shows help\n"
-	"-v show program info\n"
-	"no args shows -v and -h\n"
-	"\nProgram encrypts [data file] with [key file] using\n"
-	"xor operations so it is symetric encryption.\n");
+	"\nUsage: xorc [data file] [key file] -[hvuios]\n"
+	"Program encrypts [data file] with [key file] using\n"
+	"xor operations, so it is symetric encryption.\n"
+	"\n"
+	"Instead of file names you can use '-' (dash) to read from\n"
+	"standard input. First non option argument is treated as data file name,\n"
+	"then second as key file name.\n"
+	"If there are no file names program will read by deafault data and key\n"
+	"from standard input.\n\n"
+	"-s - don't save encrypted data to it's original file\n"
+	"-i - treat input data (not key) as in base64 format\n"
+	"-o - output encrypted data in base64\n\n"
+	);
 }
 
 //-v argument
