@@ -12,24 +12,24 @@ do
 
 	cp -f message_org message_cp
 
-	if ! .././xorc message_org key -o;
+	if ! .././xorc message_org key -s > message_cp;
 	then
-		echo "$i failed"
+		echo -e "$i \e[1;31mfailed\e[0m"
 		break
 	fi
 	
-	if ! .././xorc message_org key -i;
+	if ! .././xorc - key < message_cp > out;
 	then
-		echo "$i failed"
+		echo -e "$i \e[1;31mfailed\e[0m"
 		break
 	fi
 	
-	if ! diff message_org message_cp;
+	if ! diff message_org out;
 	then
-		echo "$i test: not the same"
+		echo -e "$i \e[1;31mtest: not the same\e[0m"
 		break
 	else
-		echo "$i good"
+		echo -e "$i \e[1;32mgood\e[0m"
 	fi
 	echo
 	

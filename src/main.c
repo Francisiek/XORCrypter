@@ -80,18 +80,25 @@ int main(int argc, char* argv[])
 
 	int msg_fd, key_fd;
 	char* msg_name, *key_name;
-	int msglen, keylen, outlen;
 	struct stat msg_st, key_st;
+	
+	char* msg;
+	char* key;
+	int msglen, keylen, outlen;
+	
+	// options
 	bool base64_input, base64_output;
 	bool dont_save;
 
 	const int MAX_INPUT = 4096;
 
-	//default values
+	// default values
 	msg_fd = key_fd = -1;
 	msg_name = key_name = NULL;
 	base64_input = base64_output = false;
 	dont_save = false;
+	msg = key = NULL;
+	
 	atexit(free_mem);
 
 	//arguments managment
@@ -151,74 +158,109 @@ int main(int argc, char* argv[])
 		version();
 		return 0;
 	}
-
-	//opening files
-	msg_fd = msg_name == NULL || *msg_name == '-' ? 0 : open(msg_name, O_RDONLY, 0);
-	key_fd = key_name == NULL || *key_name == '-' ? 0 : open(key_name, O_RDONLY, 0);
-
-	//getting files sizes
-	if(msg_fd != 0 && (msg_fd < 0 || fstat(msg_fd, &msg_st) < 0))
-		handle_err(1, "%s: can't open file - %s\n", argv[0], msg_name);
-
-	if(key_fd != 0 && (key_fd < 0 || fstat(key_fd, &key_st) < 0))
-		handle_err(1, "%s: can't open file - %s\n", argv[0], key_name);
 	
-	if (msg_fd != 0)
-		msglen = outlen = msg_st.st_size;
-	else
+
+	if (msg_name == NULL || *msg_name == '-')
+	{
+		msg_fd = 0;
 		msglen = outlen = MAX_INPUT;
 
-	if (key_fd != 0)
-		keylen = key_st.st_size;
-	else
-		keylen = MAX_INPUT;
-	
-	char* msg = (char*)malloc(msglen);
-	char* key = (char*)malloc(keylen);
-	char* output = (char*)malloc(msglen);
-	
-	if(msg == NULL || key == NULL || output == NULL)
-		handle_err(3, "%s: can't allocate memory\n", argv[0]);
-	
-	//save those pointers
-	alloc_mem_add(msg);
-	alloc_mem_add(key);
-	alloc_mem_add(output);
+		msg = (char*)malloc(msglen);
+		if (msg == NULL)
+			handle_err(3, "%s: can't allocate memory\n", argv[0]);
 
-	//read msg
-	if (msg_fd == 0)
-	{
+		alloc_mem_add(msg);
+
+		//read msg
 		char b;
 		int i = 0;
 		do
 		{
-			read(0, &b, 1);
+			if (read(0, &b, 1) == 0)
+				break;
+
 			msg[i++] = b;
 		} while (b != EOF && i < MAX_INPUT);
-		msglen = i;
+		msglen = outlen = i;
+		
+		if (b == EOF)
+		{
+			msglen--;
+			outlen--;
+		}
 	}
-	else if(read(msg_fd, msg, msglen) != msglen)
-		handle_err(2, "%s: %s file reading failed\n", argv[0], msg_name);
-	
-	//read key
-	if (key_fd == 0)
+	else
 	{
+		msg_fd = open(msg_name, O_RDONLY, 0);
+		if(msg_fd < 0 || fstat(msg_fd, &msg_st) < 0)
+			handle_err(1, "%s: can't open file - %s\n", argv[0], msg_name);
+
+		msglen = outlen = msg_st.st_size;
+
+		msg = (char*)malloc(msglen);
+		if (msg == NULL)
+			handle_err(3, "%s: can't allocate memory\n", argv[0]);
+
+		alloc_mem_add(msg);
+		
+		// read msg
+		if (read(msg_fd, msg, msglen) != msglen)
+			handle_err(2, "%s: reading of file %s failed", argv[0], msg_name);
+	}
+
+	if (key_name == NULL || *key_name == '-')
+	{
+		key_fd = 0;
+		keylen = MAX_INPUT;
+
+		key = (char*)malloc(keylen);
+		if (key == NULL)
+			handle_err(3, "%s: can't allocate memory\n", argv[0]);
+
+		alloc_mem_add(key);
+
+		//read key
 		char b;
 		int i = 0;
 		do
 		{
-			read(0, &b, 1);
+			if (read(0, &b, 1) == 0)
+				break;
+
 			key[i++] = b;
 		} while (b != EOF && i < MAX_INPUT);
 		keylen = i;
-	}
-	else if(read(key_fd, key, keylen) != keylen)
-		handle_err(2, "%s: %s file reading failed\n", argv[0], key_name);
+		if (b == EOF)
+			keylen--;
 
-	if (msg_fd != 0)
-		close(msg_fd);
+	}
+	else
+	{
+		key_fd = open(key_name, O_RDONLY, 0);
+		if(key_fd < 0 || fstat(key_fd, &key_st) < 0)
+			handle_err(1, "%s: can't open file - %s\n", argv[0], key_name);
+
+		keylen = key_st.st_size;
+
+		key = (char*)malloc(keylen);
+		if (key == NULL)
+			handle_err(3, "%s: can't allocate memory\n", argv[0]);
+
+		alloc_mem_add(key);
+		
+		// read key
+		if (read(key_fd, key, keylen) != keylen)
+			handle_err(2, "%s: reading of file %s failed", argv[0], key_name);
+	}
+
+
+	char* output = (char*)malloc(msglen);
+	if (output == NULL)
+		handle_err(3, "%s: can't allocate memory\n", argv[0]);
+
+	alloc_mem_add(output);
 	
-	if(base64_input)
+	if (base64_input)
 	{
 		char* binary = (char*)malloc(msglen);	
 		msglen = outlen = b64_decode((unsigned char*)msg, msglen, (unsigned char*)binary);
@@ -238,10 +280,10 @@ int main(int argc, char* argv[])
 	if (key_fd != 0)
 		close(key_fd);
 	
-	if (dont_save)
+	if (dont_save || msg_fd == 0)
 		msg_fd = 1;
 	
-	if (msg_fd != 0 && msg_fd != 1)
+	if (msg_fd != 1)
 		msg_fd = open(argv[1], O_WRONLY | O_TRUNC, 0);
 
 	if(msg_fd < 0)
@@ -267,7 +309,7 @@ int main(int argc, char* argv[])
 	if(write(msg_fd, output, outlen) != outlen)
 		handle_err(2, "%s: %s file writing failed\n", argv[0], msg_name);
 	
-	if (msg_fd > 2)
+	if (msg_fd != 1) 
 		close(msg_fd);
 
 	//we're done!
