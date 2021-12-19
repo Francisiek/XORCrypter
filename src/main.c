@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -64,6 +65,8 @@ void version(void)
 
 int main(int argc, char* argv[])
 {
+	srand(time(NULL));
+
 	/*
 	getopt swaps orded of argv so
 	we will give it a copy
@@ -276,7 +279,15 @@ int main(int argc, char* argv[])
 
 	//calling xcrypt function
 	xcrypt(msg, msglen, key, keylen, output);
+
+	// erase data from memory
+	for (int i = 0; i < msglen; ++i)
+		msg[i] = rand();
 	
+	for (int i = 0; i < keylen; ++i)
+		key[i] = rand();
+
+
 	if (key_fd != 0)
 		close(key_fd);
 	
